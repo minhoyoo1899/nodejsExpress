@@ -7,10 +7,6 @@ const path = require('path');
 
 dotenv.config();
 const app = express();
-
-const indexRouter = require('./routes');
-const userRouter = require('./routes/user');
-  
 app.set('port', process.env.PORT || 3000);
 
 // const bodyParser = require('body-parser');
@@ -35,17 +31,8 @@ app.use(session({
   name: 'session-cookie',
 }));
 
-app.use('/', indexRouter);
-app.use('/user', userRouter);
-
-app.use((req, res, next) => { 
-  res.status(404).send('Not Found');
-});
-
-
 const multer = require('multer');
 const fs = require('fs');
-const router = require('./routes');
 
 try {
   fs.readdirSync('uploads');
@@ -79,40 +66,24 @@ app.post('/upload',
 );
 
 
-router.get('/', function (req, res, next) {
-  next('route');
-}, function (req, res, next) {
-  console.log('실행되지 않습니다.');
-  next();
-}, function (req, res, next) {
-  console.log('실행되지 않습니다.');
+
+//미들웨어로 에러처리를 다루는 방식
+app.use((req, res, next) => {
+  console.log('모든 요청에 다 실행됩니다.');
   next();
 });
 
-router.get('/', function (req, res) { 
-  console.log('실행됩니다.');
-  res.send('Hello aaaa Express');
+app.get('/', (req, res, next) => {
+  console.log('GET / 요청에서만 실행됩니다.');
+  next();
+}, (req, res) => {
+  throw new Error('에러는 에러 처리 미들웨어로 갑니다.');
 });
 
-
-
-// //미들웨어로 에러처리를 다루는 방식
-// app.use((req, res, next) => {
-//   console.log('모든 요청에 다 실행됩니다.');
-//   next();
-// });
-
-// app.get('/', (req, res, next) => {
-//   console.log('GET / 요청에서만 실행됩니다.');
-//   next();
-// }, (req, res) => {
-//   throw new Error('에러는 에러 처리 미들웨어로 갑니다.');
-// });
-
-// app.use((err, req, res, next) => { 
-//   console.error(err);
-//   res.status(500).send(err.message);
-// });
+app.use((err, req, res, next) => { 
+  console.error(err);
+  res.status(500).send(err.message);
+});
 
 app.listen(app.get('port'), () => {
   console.log(app.get('port'), ' 번 포트에서 대기 중');
